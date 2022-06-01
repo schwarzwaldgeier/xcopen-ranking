@@ -80,9 +80,9 @@ foreach ($flights as $flight) {
      * @var Pilot $pilots [$pilotId]
      */
     $thisFlight = new Flight($flight->{'IDFlight'});
-    $thisFlight->duration = (int)$flight->{'FlightDuration'};
+    $thisFlight->airtime = (int)$flight->{'FlightDuration'};
     $thisFlight->landing = $flight->{'LandingWaypointName'};
-    $thisFlight->calcDurationPoints();
+    $thisFlight->calcAirtimePoints();
 
 
     $pilots[$pilotId]->flights[] = $thisFlight;
@@ -126,23 +126,58 @@ usort($pilots, function ($a, $b) {
         </tr>
         <?php
 
+        $flightUrl = "https://de.dhv-xc.de/flight/";
         $rank = 0;
         foreach ($pilots as $pilot) {
             $rank++;
-            $total = $pilot->totalPoints;
+            $totalScore = $pilot->totalPoints;
             $name = $pilot->name;
-            $duration = $pilot->durationPoints;
-            $triangle = $pilot->trianglePoints;
-            $distance = $pilot->distancePoints;
+
+            $airtimeScore = $pilot->airtimePoints;
+            $triangleScore = $pilot->trianglePoints;
+            $distanceScore = $pilot->distancePoints;
+            $distanceUrl = "#";
+            $triangleUrl = "#";
+            $airtimeUrl = "#";
+
+            if (!empty($pilot->distancePointsFlight)){
+                $distanceUrl = $flightUrl . $pilot->distancePointsFlight;
+            }
+
+            if (!empty($pilot->trianglePointsFlight)){
+                $triangleUrl = $flightUrl . $pilot->trianglePointsFlight;
+            }
+
+            if (!empty($pilot->airtimePointsFlight)){
+                $airtimeUrl = $flightUrl . $pilot->airtimePointsFlight;
+            }
+
+            $distanceCell = "<td><a href=\"$distanceUrl\">$distanceScore</a></td>";
+            if ($distanceUrl === "#"){
+                $distanceCell = "<td>$distanceScore</td>";
+            }
+
+            $triangleCell = "<td><a href=\"$triangleUrl\">$triangleScore</a></td>";
+
+            if ($triangleUrl === "#"){
+                $triangleCell = "<td>$triangleScore</td>";
+            }
+            $airtimeCell = "<td><a href=\"$airtimeUrl\">$airtimeScore</a></td>";
+
+            if ($airtimeUrl === "#"){
+                $airtimeCell = "<td>$airtimeScore</td>";
+            }
+
 
             $out = <<<HEREDOC
 <tr>
 <td>$rank</td>
 <td>$name</td>
-<td>$distance</td>
-<td>$triangle</td>
-<td>$duration</td>
-<td>$total</td>
+$distanceCell
+$triangleCell
+$airtimeCell
+
+<td>$totalScore</td>
 </tr>
 
 
@@ -174,13 +209,13 @@ class Pilot
     public  $name;
     public  $flights;
 
-    public  $durationPoints = 0;
+    public  $airtimePoints = 0;
     public  $distancePoints = 0;
     public  $trianglePoints = 0;
 
     public  $totalPoints = 0;
 
-    public  $durationPointsFlight = "";
+    public  $airtimePointsFlight = "";
     public  $distancePointsFlight = "";
     public  $trianglePointsFlight = "";
 
@@ -193,6 +228,9 @@ class Pilot
 
 
         for ($i = 0; $i < 3; $i++) {
+            $usedFlight = "";
+            $usedDiscipline = "";
+            $usedPoint = 0;
             foreach ($this->flights as $flight) {
                 /**
                  * @var Flight $flight
@@ -202,22 +240,23 @@ class Pilot
                     continue;
                 }
 
-                foreach (["durationPoints", "distancePoints", "trianglePoints"] as $discipline) {
+                foreach (["airtimePoints", "distancePoints", "trianglePoints"] as $discipline) {
 
 
                     if (in_array($discipline, $usedDisciplines)) {
                         continue;
                     }
 
-
-
-                    if ($flight->{$discipline} > $usedPoints[$i]) {
-                        $usedPoints[$i] = $flight->{$discipline};
-                        $usedDisciplines[$i] = $discipline;
-                        $usedFlights[$i] = $flight->id;
+                    if ($flight->{$discipline} > $usedPoint) {
+                        $usedPoint = $flight->{$discipline};
+                        $usedDiscipline = $discipline;
+                        $usedFlight = $flight->id;
                     }
                 }
             }
+            $usedPoints[$i] = $usedPoint;
+            $usedFlights[$i] = $usedFlight;
+            $usedDisciplines[$i] = $usedDiscipline;
         }
 
         for ($i = 0; $i < 3; $i++) {
@@ -236,9 +275,9 @@ class Pilot
 class Flight
 {
     public  $id;
-    public  $duration;
+    public  $airtime;
 
-    public  $durationPoints;
+    public  $airtimePoints;
     public  $trianglePoints;
     public  $distancePoints;
     public $landing;
@@ -273,15 +312,15 @@ class Flight
         }
     }
 
-    public function calcDurationPoints()
+    public function calcAirtimePoints()
     {
 
         if ($this->landing !== "Merkur"){ //Merkur landings only
-            $this->durationPoints = 0;
+            $this->airtimePoints = 0;
             return;
         }
 
-        $seconds = $this->duration;
+        $seconds = $this->airtime;
 
         if ($seconds >= 8 * 3600) {
             $points = 100;
@@ -305,7 +344,7 @@ class Flight
             $points = 0;
         }
 
-        $this->durationPoints = $points;
+        $this->airtimePoints = $points;
 
     }
 
