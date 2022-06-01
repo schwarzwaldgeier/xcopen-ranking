@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="b6d4da62-e721-4add-bcb9-0ea393552ea6" name="geier">
+        <fileTransfer accessType="SFTP" host="schwarzwaldgeier.de" port="22" sshConfigId="1c92d70d-d18a-4906-a745-c57eec93f24a" sshConfig="seb@schwarzwaldgeier.de:22 key" keyPair="true">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

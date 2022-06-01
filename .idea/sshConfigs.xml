@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="schwarzwaldgeier.de" id="1c92d70d-d18a-4906-a745-c57eec93f24a" keyPath="$USER_HOME$/.ssh/dev" port="22" nameFormat="DESCRIPTIVE" username="seb" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>
