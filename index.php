@@ -95,7 +95,7 @@ usort($pilots, function ($a, $b) {
 
 });
 $airtimeSymbol = "🕰️";
-if (time() % 10 === 0) {
+if (time() % 20 === 0) {
     $airtimeSymbol = "🥱";
 }
 
