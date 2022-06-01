@@ -1,4 +1,5 @@
 <?php
+const FILTER_PARAMS = "d0=26.05.2022&d1=19.08.2022&fkcat%5B%5D=1&l-fkcat%5B%5D=Gleitschirm&fkto%5B%5D=9543&l-fkto%5B%5D=Merkur%20DE&navpars=%7B%22start%22%3A0%2C%22limit%22%3A500%2C%22sort%22%3A%5B%7B%22field%22%3A%22BestTaskPoints%22%2C%22dir%22%3A1%7D%2C%7B%22field%22%3A%22BestTaskSpeed%22%2C%22dir%22%3A1%7D%5D%7D";
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -10,7 +11,7 @@ $arrContextOptions=array(
     ),
 );
 
-$url = "https://de.dhv-xc.de/api/fli/flights?d0=26.05.2022&d1=19.08.2022&fkcat%5B%5D=1&l-fkcat%5B%5D=Gleitschirm&fkto%5B%5D=9543&l-fkto%5B%5D=Merkur%20DE&navpars=%7B%22start%22%3A0%2C%22limit%22%3A500%2C%22sort%22%3A%5B%7B%22field%22%3A%22BestTaskPoints%22%2C%22dir%22%3A1%7D%2C%7B%22field%22%3A%22BestTaskSpeed%22%2C%22dir%22%3A1%7D%5D%7D";
+$url = "https://de.dhv-xc.de/api/fli/flights?" . FILTER_PARAMS ;
 $response = file_get_contents($url, false, stream_context_create($arrContextOptions));
 
 $responseJson = json_decode($response);
@@ -168,11 +169,13 @@ usort($pilots, function ($a, $b) {
                 $airtimeCell = "<td>$airtimeScore</td>";
             }
 
+            $pilotUrl = "https://de.dhv-xc.de/flights?" . FILTER_PARAMS . "&fkpil=" . $pilot->id;
+
 
             $out = <<<HEREDOC
 <tr>
 <td>$rank</td>
-<td>$name</td>
+<td><a href="$pilotUrl">$name</a></td>
 $distanceCell
 $triangleCell
 $airtimeCell
@@ -240,7 +243,7 @@ class Pilot
                     continue;
                 }
 
-                foreach (["airtimePoints", "distancePoints", "trianglePoints"] as $discipline) {
+                foreach (["distancePoints", "trianglePoints", "airtimePoints"] as $discipline) {
 
 
                     if (in_array($discipline, $usedDisciplines)) {
