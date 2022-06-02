@@ -134,12 +134,12 @@ if (time() % 20 === 0) {
         } else if ($rank === 3) {
             $displayRank = "🥉";
         }
-        $totalScore = $pilot->totalPoints;
+        $totalScore = round($pilot->totalPoints, 2);
         $name = $pilot->name;
 
-        $airtimeScore = $pilot->airtimePoints;
-        $triangleScore = $pilot->trianglePoints;
-        $distanceScore = $pilot->distancePoints;
+        $airtimeScore = round($pilot->airtimePoints, 2);
+        $triangleScore = round($pilot->trianglePoints, 2);
+        $distanceScore = round($pilot->distancePoints, 2);
         $distanceUrl = "#";
         $triangleUrl = "#";
         $airtimeUrl = "#";
