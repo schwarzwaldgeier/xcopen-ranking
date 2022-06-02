@@ -13,13 +13,13 @@ $arrContextOptions = array(
     ),
 );
 
-$url = "https://de.dhv-xc.de/api/fli/flights?" . FILTER_PARAMS;
-$response = file_get_contents($url, false, stream_context_create($arrContextOptions));
+$allFlightsUrl = "https://de.dhv-xc.de/api/fli/flights?" . FILTER_PARAMS;
+$allFlightsResponse = file_get_contents($allFlightsUrl, false, stream_context_create($arrContextOptions));
 
-$responseJson = json_decode($response);
-$flights = $responseJson->data;
+$allFlightsDataJson = json_decode($allFlightsResponse);
+$flights = $allFlightsDataJson->data;
 
-$participantIds = [
+$participantDhvXcIds = [
     "11922", //Wölfle
     "135", //Winkler
     "11726", //Plank
@@ -62,28 +62,29 @@ foreach ($flights as $flight) {
 
 
     $pilotId = $flight->{'FKPilot'};
-    if (!in_array($pilotId, $participantIds)) {
+    if (!in_array($pilotId, $participantDhvXcIds)) {
         continue;
     }
+
     if (!isset($pilots[$pilotId])) {
         $pilot = new Pilot($pilotId);
-        $pilot->name = $flight->{'FirstName'} . " " . $flight->{'LastName'};
+        $pilot->fullName = $flight->{'FirstName'} . " " . $flight->{'LastName'};
         $pilots[$pilotId] = $pilot;
     }
     /**
      * @var Pilot $pilots [$pilotId]
      */
-    $thisFlight = new Flight($flight->{'IDFlight'});
-    $thisFlight->airtime = (int)$flight->{'FlightDuration'};
-    $thisFlight->landing = $flight->{'LandingWaypointName'};
-    $thisFlight->calcAirtimePoints();
+    $currentFlight = new Flight($flight->{'IDFlight'});
+    $currentFlight->duration = (int)$flight->{'FlightDuration'};
+    $currentFlight->landingWaypoint = $flight->{'LandingWaypointName'};
+    $currentFlight->calculateAirtimeScore();
 
 
-    $pilots[$pilotId]->flights[] = $thisFlight;
+    $pilots[$pilotId]->allFlights[] = $currentFlight;
 }
 
 foreach ($pilots as $pilot) {
-    $pilot->getBestPoints();
+    $pilot->getBestScoreCombo();
 }
 
 usort($pilots, function ($a, $b) {
@@ -91,7 +92,7 @@ usort($pilots, function ($a, $b) {
      * @var Pilot $a
      * @var Pilot $b
      */
-    return $b->totalPoints - $a->totalPoints;
+    return $b->totalScore - $a->totalScore;
 
 });
 $airtimeSymbol = "🕰️";
@@ -123,37 +124,38 @@ if (time() % 20 === 0) {
     <?php
 
     $flightUrl = "https://de.dhv-xc.de/flight/";
-    $rank = 0;
+    $pilotRanking = 0;
     foreach ($pilots as $pilot) {
-        $rank++;
-        $displayRank = $rank;
-        if ($rank === 1) {
-            $displayRank = "🥇";
-        } else if ($rank === 2) {
-            $displayRank = "🥈";
-        } else if ($rank === 3) {
-            $displayRank = "🥉";
+        $pilotRanking++;
+        $displayedRanking = $pilotRanking;
+        if ($pilotRanking === 1) {
+            $displayedRanking = "🥇";
+        } else if ($pilotRanking === 2) {
+            $displayedRanking = "🥈";
+        } else if ($pilotRanking === 3) {
+            $displayedRanking = "🥉";
         }
-        $totalScore = round($pilot->totalPoints, 2);
-        $name = $pilot->name;
+        $totalScore = round($pilot->totalScore, 2);
+        $name = $pilot->fullName;
 
-        $airtimeScore = round($pilot->airtimePoints, 2);
-        $triangleScore = round($pilot->trianglePoints, 2);
-        $distanceScore = round($pilot->distancePoints, 2);
+        $airtimeScore = round($pilot->airtimeScore, 2);
+        $triangleScore = round($pilot->triangleScore, 2);
+        $distanceScore = round($pilot->freeDistanceScore, 2);
+
         $distanceUrl = "#";
         $triangleUrl = "#";
         $airtimeUrl = "#";
 
-        if (!empty($pilot->distancePointsFlight)) {
-            $distanceUrl = $flightUrl . $pilot->distancePointsFlight;
+        if (!empty($pilot->bestDistanceFlightId)) {
+            $distanceUrl = $flightUrl . $pilot->bestDistanceFlightId;
         }
 
-        if (!empty($pilot->trianglePointsFlight)) {
-            $triangleUrl = $flightUrl . $pilot->trianglePointsFlight;
+        if (!empty($pilot->bestTriangleFlightId)) {
+            $triangleUrl = $flightUrl . $pilot->bestTriangleFlightId;
         }
 
-        if (!empty($pilot->airtimePointsFlight)) {
-            $airtimeUrl = $flightUrl . $pilot->airtimePointsFlight;
+        if (!empty($pilot->bestAirtimeFlightId)) {
+            $airtimeUrl = $flightUrl . $pilot->bestAirtimeFlightId;
         }
 
         $distanceCell = "<td><a href=\"$distanceUrl\">$distanceScore</a></td>";
@@ -172,27 +174,21 @@ if (time() % 20 === 0) {
             $airtimeCell = "<td>$airtimeScore</td>";
         }
 
-        $pilotUrl = "https://de.dhv-xc.de/flights?" . FILTER_PARAMS . "&fkpil=" . $pilot->id;
+        $allFlightsOfPilotUrl = "https://de.dhv-xc.de/flights?" . FILTER_PARAMS . "&fkpil=" . $pilot->dhvXcId;
 
 
         $out = <<<HEREDOC
 <tr>
-<td>$displayRank</td>
-<td><a href="$pilotUrl">$name</a></td>
+<td>$displayedRanking</td>
+<td><a href="$allFlightsOfPilotUrl">$name</a></td>
 $distanceCell
 $triangleCell
 $airtimeCell
-
 <td>$totalScore</td>
 </tr>
-
-
-
 HEREDOC;
 
         echo $out;
-
-
     }
 
     ?>
@@ -207,70 +203,74 @@ class Pilot
 {
     public function __construct($id)
     {
-        $this->id = $id;
-        $this->flights = [];
+        $this->dhvXcId = $id;
+        $this->allFlights = [];
     }
 
-    public $id;
-    public $name;
-    public $flights;
+    public $dhvXcId;
+    public $fullName;
+    public $allFlights;
 
-    public $airtimePoints = 0;
-    public $distancePoints = 0;
-    public $trianglePoints = 0;
+    public $airtimeScore = 0;
+    public $freeDistanceScore = 0;
+    public $triangleScore = 0;
 
-    public $totalPoints = 0;
+    public $totalScore = 0;
 
-    public $airtimePointsFlight = "";
-    public $distancePointsFlight = "";
-    public $trianglePointsFlight = "";
+    public $bestAirtimeFlightId = "";
+    public $bestDistanceFlightId = "";
+    public $bestTriangleFlightId = "";
 
-    public function getBestPoints()
+    public function getBestScoreCombo()
     {
 
-        $usedPoints = [0, 0, 0];
-        $usedDisciplines = ["", "", ""];
-        $usedFlights = ["", "", ""];
+        $appliedScores = [0, 0, 0];
+        $scoredDisciplines = ["", "", ""];
+        $scoredFlights = ["", "", ""];
 
 
+        /*
+         * -Look at all flights and get the one with the highest score in any discipline --> 1st score
+         * -Find highest score of remaining flights, but skip disciplines already used (2x)
+         */
         for ($i = 0; $i < 3; $i++) {
-            $usedFlight = "";
-            $usedDiscipline = "";
-            $usedPoint = 0;
-            foreach ($this->flights as $flight) {
+            $currentBestFlightId = "";
+            $currentBestDiscipline = "";
+            $currentBestScore = 0;
+            foreach ($this->allFlights as $flight) {
                 /**
                  * @var Flight $flight
                  */
 
-                if (in_array($flight->id, $usedFlights)) {
+                if (in_array($flight->id, $scoredFlights)) {
                     continue;
                 }
 
                 foreach (["distancePoints", "trianglePoints", "airtimePoints"] as $discipline) {
 
 
-                    if (in_array($discipline, $usedDisciplines)) {
+                    if (in_array($discipline, $scoredDisciplines)) {
                         continue;
                     }
 
-                    if ($flight->{$discipline} > $usedPoint) {
-                        $usedPoint = $flight->{$discipline};
-                        $usedDiscipline = $discipline;
-                        $usedFlight = $flight->id;
+                    if ($flight->{$discipline} > $currentBestScore) {
+                        $currentBestScore = $flight->{$discipline};
+                        $currentBestDiscipline = $discipline;
+                        $currentBestFlightId = $flight->id;
                     }
                 }
             }
-            $usedPoints[$i] = $usedPoint;
-            $usedFlights[$i] = $usedFlight;
-            $usedDisciplines[$i] = $usedDiscipline;
+            $appliedScores[$i] = $currentBestScore;
+            $scoredFlights[$i] = $currentBestFlightId;
+            $scoredDisciplines[$i] = $currentBestDiscipline;
         }
 
         for ($i = 0; $i < 3; $i++) {
-            $this->{$usedDisciplines[$i]} = $usedPoints[$i];
-            $this->{$usedDisciplines[$i] . "Flight"} = $usedFlights[$i];
+            $this->{$scoredDisciplines[$i]} = $appliedScores[$i];
+            $this->{$scoredDisciplines[$i] . "Flight"} = $scoredFlights[$i];
         }
 
-        $this->totalPoints = array_sum($usedPoints);
+        $this->totalScore = array_sum($appliedScores);
 
 
     }
@@ -281,12 +281,12 @@ class Pilot
 class Flight
 {
     public $id;
-    public $airtime;
+    public $duration;
 
     public $airtimePoints;
     public $trianglePoints;
     public $distancePoints;
-    public $landing;
+    public $landingWaypoint;
 
     public function __construct($id)
     {
@@ -297,10 +297,10 @@ class Flight
             ),
         );
         $this->id = $id;
-        $url = "https://de.dhv-xc.de/api/fli/tasks?fkflight=$id";
-        $content = file_get_contents($url, false, stream_context_create($arrContextOptions));
-        $contentJson = json_decode($content);
-        foreach ($contentJson->{'data'} as $task) {
+        $apiTasksUrl = "https://de.dhv-xc.de/api/fli/tasks?fkflight=$id";
+        $apiTasksContent = file_get_contents($apiTasksUrl, false, stream_context_create($arrContextOptions));
+        $tasks = json_decode($apiTasksContent);
+        foreach ($tasks->{'data'} as $task) {
             switch ($task->{'FKTaskType'}) {
                 case "1":
                     $this->distancePoints = (float)$task->{'TaskPoints'};
@@ -318,15 +318,15 @@ class Flight
         }
     }
 
-    public function calcAirtimePoints()
+    public function calculateAirtimeScore()
     {
 
-        if ($this->landing !== "Merkur") { //Merkur landings only
+        if ($this->landingWaypoint !== "Merkur") { //Merkur landings only
             $this->airtimePoints = 0;
             return;
         }
 
-        $seconds = $this->airtime;
+        $seconds = $this->duration;
 
         if ($seconds >= 8 * 3600) {
             $points = 100;
