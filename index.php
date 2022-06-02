@@ -74,7 +74,7 @@ foreach ($flights as $flight) {
      * @var Pilot $pilots [$pilotId]
      */
     $thisFlight = new Flight($flight->{'IDFlight'});
-    $thisFlight->airtime = (int)$flight->{'FlightDuration'};
+    $thisFlight->flightDuration = (int)$flight->{'FlightDuration'};
     $thisFlight->landing = $flight->{'LandingWaypointName'};
     $thisFlight->calcAirtimePoints();
 
@@ -281,7 +281,7 @@ class Pilot
 class Flight
 {
     public $id;
-    public $airtime;
+    public $flightDuration;
 
     public $airtimePoints;
     public $trianglePoints;
@@ -321,37 +321,39 @@ class Flight
     public function calcAirtimePoints()
     {
 
-        if ($this->landing !== "Merkur") { //Merkur landings only
+        // Airtime is scored for Merkur landings only
+        if ($this->landing !== "Merkur") {
             $this->airtimePoints = 0;
             return;
         }
 
-        $seconds = $this->airtime;
+        $s = $this->flightDuration;
 
-        if ($seconds >= 8 * 3600) {
-            $points = 100;
-        } elseif ($seconds >= 7 * 3600) {
-            $points = 80;
-        } elseif ($seconds >= 6 * 3600) {
-            $points = 70;
-        } elseif ($seconds >= 5 * 3600) {
-            $points = 60;
-        } elseif ($seconds >= 4 * 3600) {
-            $points = 50;
-        } elseif ($seconds >= 3 * 3600) {
-            $points = 30;
-        } elseif ($seconds >= 2 * 3600) {
-            $points = 20;
-        } elseif ($seconds >= 3600) {
-            $points = 10;
-        } elseif ($seconds >= 1800) {
-            $points = 5;
-        } else {
-            $points = 0;
+        $h = 3600;
+
+        //5 points for 30 minutes
+        if ($s >= 1800 && $s < $h) {
+            $this->airtimePoints = 5;
+            return;
         }
 
-        $this->airtimePoints = $points;
+        //10 points per every completed hour
+        $this->airtimePoints = floor($s / $h) * 10;
 
+        //10 points extra if 4 hours or more
+        if ($s >= 4 * $h){
+            $this->airtimePoints += 10;
+        }
+
+        //Additional 10 extra for 8 hours
+        if ($s >= 8 * $h){
+            $this->airtimePoints += 10;
+        }
+
+        //score limit
+        if ($this->airtimePoints > 100){
+            $this->airtimePoints = 100;
+        }
     }
 
 
