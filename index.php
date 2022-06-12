@@ -337,7 +337,7 @@ class Flight
     {
 
         // Airtime is scored for Merkur landings only
-        if ($this->landing !== "Merkur") {
+        if ($this->landing !== "Merkur" && $this->landing !== "Baden Baden" && $this->landing !== "Baden-Baden") {
             $this->airtimePoints = 0;
             return;
         }
