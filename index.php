@@ -91,9 +91,24 @@ usort($pilots, function ($a, $b) {
      * @var Pilot $a
      * @var Pilot $b
      */
-    return $b->totalPoints - $a->totalPoints;
+
+    $diff = $a->totalPoints - $b->totalPoints;
+    if ($diff == 0.0){
+        return 0;
+    }
+
+    else if ($diff > 0){
+        return 1;
+    }
+
+   else {
+       return -1;
+   }
 
 });
+
+$pilots = array_reverse($pilots);
+
 $airtimeSymbol = "🕰️";
 if (time() % 20 === 0) {
     $airtimeSymbol = "🥱";
