@@ -2,23 +2,6 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
-const FILTER_PARAMS = "d0=26.05.2022&d1=19.08.2022&fkcat%5B%5D=1&l-fkcat%5B%5D=Gleitschirm&fkto%5B%5D=9543&l-fkto%5B%5D=Merkur%20DE&navpars=%7B%22start%22%3A0%2C%22limit%22%3A500%2C%22sort%22%3A%5B%7B%22field%22%3A%22BestTaskPoints%22%2C%22dir%22%3A1%7D%2C%7B%22field%22%3A%22BestTaskSpeed%22%2C%22dir%22%3A1%7D%5D%7D";
-
-
-$arrContextOptions = array(
-    "ssl" => array(
-        "verify_peer" => false,
-        "verify_peer_name" => false,
-    ),
-);
-
-$url = "https://de.dhv-xc.de/api/fli/flights?" . FILTER_PARAMS;
-$response = file_get_contents($url, false, stream_context_create($arrContextOptions));
-
-$responseJson = json_decode($response);
-$flights = $responseJson->data;
-
 $participantIds = [
     "11922", //Wölfle
     "135", //Winkler
@@ -54,6 +37,29 @@ $participantIds = [
 
 
 ];
+
+$filterAllPilots = "d0=26.05.2022&d1=19.08.2022&fkcat%5B%5D=1&l-fkcat%5B%5D=Gleitschirm&fkto%5B%5D=9543&l-fkto%5B%5D=Merkur%20DE&navpars=%7B%22start%22%3A0%2C%22limit%22%3A500%2C%22sort%22%3A%5B%7B%22field%22%3A%22BestTaskPoints%22%2C%22dir%22%3A1%7D%2C%7B%22field%22%3A%22BestTaskSpeed%22%2C%22dir%22%3A1%7D%5D%7D";
+$filterParticipants = $filterAllPilots;
+
+foreach ($participantIds as $pid){
+    $filterParticipants .= "&fkpil%5B%5D=$pid";
+}
+
+
+$arrContextOptions = array(
+    "ssl" => array(
+        "verify_peer" => false,
+        "verify_peer_name" => false,
+    ),
+);
+
+$url = "https://de.dhv-xc.de/api/fli/flights?" . $filterParticipants;
+
+$response = file_get_contents($url, false, stream_context_create($arrContextOptions));;
+
+$responseJson = json_decode($response);
+$flights = $responseJson->data;
+
 
 $pilots = [];
 
@@ -101,9 +107,9 @@ usort($pilots, function ($a, $b) {
         return 1;
     }
 
-   else {
-       return -1;
-   }
+    else {
+        return -1;
+    }
 
 });
 
@@ -126,6 +132,8 @@ if (time() % 20 === 0) {
 
 <body>
 <h2>XC Open 2022 Live Ranking</h2>
+
+
 <table>
     <tr>
         <th title="Platzierung">🏅</th>
@@ -187,7 +195,7 @@ if (time() % 20 === 0) {
             $airtimeCell = "<td>$airtimeScore</td>";
         }
 
-        $pilotUrl = "https://de.dhv-xc.de/flights?" . FILTER_PARAMS . "&fkpil=" . $pilot->id;
+        $pilotUrl = "https://de.dhv-xc.de/flights?" . $filterAllPilots . "&fkpil=" . $pilot->id;
 
 
         $out = <<<HEREDOC
