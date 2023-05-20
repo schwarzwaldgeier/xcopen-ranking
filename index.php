@@ -6,7 +6,7 @@ error_reporting(E_ALL);
 require_once 'Flight.php';
 require_once 'Pilot.php';
 
-$gistUrl = "https://gist.githubusercontent.com/sandornusser/dd4d7efae40f3c43a83a20509cbbddc2/raw/26611c5e8accdcccf561608912a165ea823e62d7/gistfile1.txt";
+$gistUrl = "https://gist.githubusercontent.com/sandornusser/dd4d7efae40f3c43a83a20509cbbddc2/raw/d54739f423b4bb6659d30353815725266fbf3882/gistfile1.txt";
 $gist = file_get_contents($gistUrl);
 
 if ($gist === false){
