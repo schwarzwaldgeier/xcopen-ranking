@@ -64,22 +64,6 @@ foreach ($flights as $flight) {
     $thisFlight = new Flight($flight->{'IDFlight'});
     $thisFlight->flightDuration = (int)$flight->{'FlightDuration'};
 
-
-    //Korrektur fehlerhafte Zeiten
-    switch ($thisFlight->id) {
-        case "1583071": //Matthias 5 Minuten fehlen
-            $thisFlight->flightDuration = 7 * 3600 + 53 * 60;
-            break;
-
-        case "1570779": //Marc 25 Sekunden fehlen
-            $thisFlight->flightDuration = 3600 + 59 * 60;
-            break;
-
-        case "1543507": //Klaus 1 Minute fehlt
-            $thisFlight->flightDuration = 59 * 60;
-            break;
-    }
-
     $thisFlight->landing = $flight->{'LandingWaypointName'};
     $thisFlight->calcAirtimePoints();
 
