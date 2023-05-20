@@ -2,17 +2,10 @@
 <project version="4">
   <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="geier">
-        <serverdata>
-          <mappings>
-            <mapping deploy="/var/www/vhosts/schwarzwaldgeier.de/httpdocs/xcopen" local="$PROJECT_DIR$" web="/xcopen" />
-          </mappings>
-        </serverdata>
-      </paths>
       <paths name="geier (project level)">
         <serverdata>
           <mappings>
-            <mapping deploy="/var/www/vhosts/schwarzwaldgeier.de/httpdocs/xcopen" local="$PROJECT_DIR$" web="/xcopen" />
+            <mapping deploy="/srv/www/wordpress/xcopen" local="$PROJECT_DIR$" web="/xcopen" />
           </mappings>
         </serverdata>
       </paths>
