@@ -94,8 +94,6 @@ usort($pilots, function ($a, $b) {
 
 $pilots = array_reverse($pilots);
 
-$airtimeSymbol = "🕰️";
-
 ?>
     <!doctype html>
     <html lang="en">
@@ -117,7 +115,7 @@ $airtimeSymbol = "🕰️";
             <th title="Pilot">🪂</th>
             <th title="One-Way">💨</th>
             <th title="Dreieck">📐</th>
-            <th title="Airtime"><?php echo $airtimeSymbol; ?></th>
+            <th title="Airtime">🕰️</th>
             <th title="Summe">Σ</th>
         </tr>
         <?php
