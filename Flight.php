@@ -8,7 +8,6 @@ class Flight
     public $airtimePoints;
     public $trianglePoints;
     public $distancePoints;
-    public $landing;
 
     public function __construct($id)
     {

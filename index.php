@@ -64,7 +64,6 @@ foreach ($flights as $flight) {
     $thisFlight = new Flight($flight->{'IDFlight'});
     $thisFlight->flightDuration = (int)$flight->{'FlightDuration'};
 
-    $thisFlight->landing = $flight->{'LandingWaypointName'};
     $thisFlight->calcAirtimePoints();
 
 
