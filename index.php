@@ -153,17 +153,17 @@ $pilots = array_reverse($pilots);
                 $airtimeUrl = $flightUrl . $pilot->airtimePointsFlight;
             }
 
-            $distanceCell = "<td><a href=\"$distanceUrl\">$distanceScore</a></td>";
+            $distanceCell = "<td><a target=\"blank\" href=\"$distanceUrl\">$distanceScore</a></td>";
             if ($distanceUrl === "#") {
                 $distanceCell = "<td>$distanceScore</td>";
             }
 
-            $triangleCell = "<td><a href=\"$triangleUrl\">$triangleScore</a></td>";
+            $triangleCell = "<td><a target=\"blank\" href=\"$triangleUrl\">$triangleScore</a></td>";
 
             if ($triangleUrl === "#") {
                 $triangleCell = "<td>$triangleScore</td>";
             }
-            $airtimeCell = "<td><a href=\"$airtimeUrl\">$airtimeScore</a></td>";
+            $airtimeCell = "<td><a target=\"blank\" href=\"$airtimeUrl\">$airtimeScore</a></td>";
 
             if ($airtimeUrl === "#") {
                 $airtimeCell = "<td>$airtimeScore</td>";
@@ -175,7 +175,7 @@ $pilots = array_reverse($pilots);
             $out = <<<HEREDOC
 <tr>
 <td>$displayRank</td>
-<td><a href="$pilotUrl">$name</a></td>
+<td><a target="_blank" href="$pilotUrl">$name</a></td>
 $distanceCell
 $triangleCell
 $airtimeCell
