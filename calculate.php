@@ -5,8 +5,11 @@ error_reporting(E_ALL);
 
 require_once 'Flight.php';
 require_once 'Pilot.php';
+require_once 'Debug.php';
 
+//$gistUrl = "andreas.txt";
 $gistUrl = "https://gist.githubusercontent.com/sandornusser/dd4d7efae40f3c43a83a20509cbbddc2/raw/d54739f423b4bb6659d30353815725266fbf3882/gistfile1.txt";
+
 $gist = file_get_contents($gistUrl);
 
 if ($gist === false){
@@ -41,6 +44,19 @@ $response = file_get_contents($url, false, stream_context_create($arrContextOpti
 
 $responseJson = json_decode($response);
 $flights = $responseJson->data;
+//get hash of all flights object
+
+// check if "RELOAD_ON_SAVE" is part of the current url
+if (strpos($_SERVER['REQUEST_URI'], 'RELOAD_ON_SAVE') === false) {
+    $hash = md5(json_encode($flights));
+    $lastHash = file_get_contents('last_query_hash');
+    if ($hash === $lastHash) {
+        die("no new flights" . PHP_EOL);
+    }
+    file_put_contents('last_query_hash', $hash);
+}
+
+
 
 
 $pilots = [];
@@ -62,8 +78,7 @@ foreach ($flights as $flight) {
      * @var Pilot $pilots [$pilotId]
      */
     $thisFlight = new Flight($flight->{'IDFlight'});
-    $thisFlight->flightDuration = (int)$flight->{'FlightDuration'};
-
+    $thisFlight->flightDuration = (float)$flight->{'FlightDuration'};
     $thisFlight->calcAirtimePoints();
 
 
@@ -105,7 +120,7 @@ $pilots = array_reverse($pilots);
     </head>
 
     <body>
-    <h2>XC Open 2022 Live Ranking</h2>
+    <h2>XC Open 2023 Live Ranking</h2>
 
 
     <table>
@@ -134,9 +149,9 @@ $pilots = array_reverse($pilots);
             $totalScore = round($pilot->totalPoints, 2);
             $name = $pilot->name;
 
-            $airtimeScore = round($pilot->airtimePoints, 2);
-            $triangleScore = round($pilot->trianglePoints, 2);
-            $distanceScore = round($pilot->distancePoints, 2);
+            $airtimeScore = round($pilot->airtimePointsScore, 2);
+            $triangleScore = round($pilot->trianglePointsScore, 2);
+            $distanceScore = round($pilot->distancePointsScore, 2);
             $distanceUrl = "#";
             $triangleUrl = "#";
             $airtimeUrl = "#";
@@ -194,6 +209,18 @@ HEREDOC;
 
         ?>
     </table>
+    <?php
+    $timezone = new DateTimeZone('Europe/Berlin');
+    try {
+        $date = new DateTime('now', $timezone);
+        echo "<p>";
+        echo "Stand: ";
+        echo $date->format('d.m.Y H:i:s');
+        echo "</p>";
+    } catch (Exception $e) {
+        error_log($e->getMessage());
+    }
+    ?>
 
     </body>
     </html>
