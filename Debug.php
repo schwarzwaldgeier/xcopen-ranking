@@ -4,7 +4,7 @@ class Debug
 {
     public static function log ($message, $label = ""){
         //return if there is no "DEBUG" in the get parameters
-        if (strpos($_SERVER['REQUEST_URI'], 'RELOAD_ON_SAVE') === false){
+        if (!isset($_SERVER['REQUEST_URI']) || strpos($_SERVER['REQUEST_URI'], 'RELOAD_ON_SAVE') === false){
             return;
         }
 

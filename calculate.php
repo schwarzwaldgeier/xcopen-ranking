@@ -7,7 +7,6 @@ require_once 'Flight.php';
 require_once 'Pilot.php';
 require_once 'Debug.php';
 
-//$gistUrl = "andreas.txt";
 $gistUrl = "https://gist.githubusercontent.com/sandornusser/dd4d7efae40f3c43a83a20509cbbddc2/raw/d54739f423b4bb6659d30353815725266fbf3882/gistfile1.txt";
 
 $gist = file_get_contents($gistUrl);
@@ -43,17 +42,25 @@ $url = "https://de.dhv-xc.de/api/fli/flights?" . $filterParticipants;
 $response = file_get_contents($url, false, stream_context_create($arrContextOptions));
 
 $responseJson = json_decode($response);
+if ($responseJson === false) {
+    error_log("Failed to parse response");
+    die(1);
+}
 $flights = $responseJson->data;
 //get hash of all flights object
 
 // check if "RELOAD_ON_SAVE" is part of the current url
-if (strpos($_SERVER['REQUEST_URI'], 'RELOAD_ON_SAVE') === false) {
-    $hash = md5(json_encode($flights));
-    $lastHash = file_get_contents('last_query_hash');
+$isRunInTerminal = !isset($_SERVER['REQUEST_URI']) || strpos($_SERVER['REQUEST_URI'], 'RELOAD_ON_SAVE') === false;
+
+if ($isRunInTerminal) {
+    $hash = hash('sha256', json_encode($flights));
+    $hashfile = '/tmp/last_query_hash';
+    $lastHash = file_get_contents($hashfile);
     if ($hash === $lastHash) {
-        die("no new flights" . PHP_EOL);
+        error_log( "No changes in flights, not updating");
+        die();
     }
-    file_put_contents('last_query_hash', $hash);
+    file_put_contents($hashfile, $hash);
 }
 
 
